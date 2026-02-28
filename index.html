@@ -236,7 +236,7 @@
       margin-bottom: 1rem;
     }
     .field-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
       margin-bottom: 1rem;
     }
     .field { display: flex; flex-direction: column; gap: 0.38rem; }
@@ -318,6 +318,133 @@
     }
     .btn-notify:hover { opacity: 0.85; transform: translateY(-1px); }
 
+    /* === BIDDERS BOARD === */
+    .board-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.4rem;
+      margin: 1rem 0 1.2rem;
+    }
+    .auction-state {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.7rem;
+      margin-bottom: 1rem;
+    }
+    .auction-cell {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .auction-k {
+      font-size: 0.66rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .auction-v {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+      color: #e2e8f0;
+    }
+    .table-scroll { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.72rem 0.6rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 0.9rem;
+    }
+    th {
+      color: var(--muted2);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .pill {
+      display: inline-block;
+      border: 1px solid rgba(16,185,129,0.3);
+      background: rgba(16,185,129,0.12);
+      color: #6ee7b7;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+    .muted-note {
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-top: 0.65rem;
+    }
+
+    /* === ADMIN PANEL === */
+    .admin-panel {
+      background: rgba(59,130,246,0.06);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 16px;
+      padding: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .admin-head {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #93c5fd;
+      margin-bottom: 0.65rem;
+    }
+    .admin-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.7rem;
+    }
+    .admin-row input { max-width: 260px; }
+    .admin-btn {
+      border: 1px solid rgba(59,130,246,0.35);
+      background: rgba(59,130,246,0.2);
+      color: #bfdbfe;
+      border-radius: 10px;
+      padding: 0.62rem 0.9rem;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+    .pending-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem;
+      margin-top: 0.55rem;
+      background: rgba(255,255,255,0.02);
+    }
+    .pending-line {
+      font-size: 0.84rem;
+      color: #e2e8f0;
+      margin-bottom: 0.4rem;
+    }
+    .pending-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .pending-actions label {
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 0.8rem;
+      color: var(--muted2);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
     /* === FOOTER === */
     footer {
       padding: 1.8rem 2rem; text-align: center;
@@ -328,6 +455,7 @@
 
     /* === RESPONSIVE === */
     @media (max-width: 580px) {
+      .auction-state { grid-template-columns: 1fr; }
       .stats     { grid-template-columns: 1fr; }
       .field-row { grid-template-columns: 1fr; }
       .notify-row { flex-direction: column; }
@@ -400,6 +528,10 @@
           <input type="hidden" name="_template" value="table" />
           <div class="field-row">
             <div class="field">
+              <label for="bidName">Bid Name</label>
+              <input type="text" id="bidName" name="bid_name" placeholder="Acme Capital" required />
+            </div>
+            <div class="field">
               <label for="bidEmail">Email Address</label>
               <input type="email" id="bidEmail" name="bidder_email" placeholder="you@company.com" required />
             </div>
@@ -410,7 +542,55 @@
           </div>
           <button type="submit" class="btn-bid">🔒 &nbsp;Submit Bid — Secure &amp; Confidential</button>
           <p class="form-note">🛡️ Your information is never shared. We'll reach out within 24 hours to confirm.</p>
+          <div class="success" id="bidMessage"></div>
         </form>
+      </div>
+
+      <div class="sec-head">
+        <div class="sec-title">Bidders Board</div>
+        <div class="sec-sub">Only admin-approved bidders with a verified $1,000 deposit are shown.</div>
+      </div>
+
+      <div class="board-wrap">
+        <div class="auction-state">
+          <div class="auction-cell">
+            <div class="auction-k">Ticker</div>
+            <div class="auction-v" id="tickerStatus">Running</div>
+          </div>
+          <div class="auction-cell">
+            <div class="auction-k">4h Winner Clock</div>
+            <div class="auction-v" id="winnerCountdown">--:--:--</div>
+          </div>
+          <div class="auction-cell">
+            <div class="auction-k">12h Lock Window</div>
+            <div class="auction-v" id="lockCountdown">--:--:--</div>
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Bid Name</th>
+                <th>Bid Amount</th>
+                <th>Deposit</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="boardRows"></tbody>
+          </table>
+        </div>
+        <p class="muted-note">Rule applied: when an approved bidder matches/exceeds live price, ticker freezes and countdowns begin.</p>
+      </div>
+
+      <div class="admin-panel">
+        <div class="admin-head">Admin Approval</div>
+        <div class="admin-row">
+          <input type="password" id="adminCode" placeholder="Enter admin code" />
+          <button class="admin-btn" type="button" id="unlockAdmin">Unlock</button>
+        </div>
+        <div class="muted-note" id="adminStatus">Locked. Admin can approve pending bids after deposit is confirmed.</div>
+        <div id="pendingList"></div>
       </div>
 
       <!-- NOTIFY -->
@@ -428,6 +608,7 @@
           <input type="email" id="notifyEmail" name="subscriber_email" placeholder="your@email.com" required />
           <button type="submit" class="btn-notify">Notify Me</button>
         </form>
+        <div class="success" id="notifyMessage" style="margin-top:1rem;"></div>
       </div>
 
     </div>
@@ -446,14 +627,228 @@
   const START_T  = new Date('2026-02-28T00:00:00Z').getTime();
   const el       = document.getElementById('priceDisplay');
   const bidInput = document.getElementById('bidAmt');
+  const bidForm = document.getElementById('bidForm');
+  const notifyForm = document.getElementById('notifyForm');
+  const boardRows = document.getElementById('boardRows');
+  const bidMessage = document.getElementById('bidMessage');
+  const notifyMessage = document.getElementById('notifyMessage');
+  const tickerStatus = document.getElementById('tickerStatus');
+  const winnerCountdown = document.getElementById('winnerCountdown');
+  const lockCountdown = document.getElementById('lockCountdown');
+  const pendingList = document.getElementById('pendingList');
+  const adminStatus = document.getElementById('adminStatus');
+  const adminCodeInput = document.getElementById('adminCode');
+  const unlockAdminBtn = document.getElementById('unlockAdmin');
+
+  const STORAGE = {
+    pending: 'oc_pending_bids_v1',
+    approved: 'oc_approved_bids_v1',
+    auction: 'oc_auction_state_v1'
+  };
+
+  // Change this to your own strong code after deploy.
+  const ADMIN_CODE = 'CHANGE_THIS_ADMIN_CODE';
+
+  let currentPrice = START_P;
+  let isAdminUnlocked = false;
   let   lastCents = -1;
 
-  function tick() {
+  const readStore = (key, fallback) => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const writeStore = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+
+  const fmtMoney = (value) => '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtTimer = (ms) => {
+    if (ms <= 0) return '00:00:00';
+    const sec = Math.floor(ms / 1000);
+    const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
+  const getLivePrice = () => {
     const elapsed = Date.now() - START_T;
-    const price   = START_P + (elapsed * RATE_MS);
+    return START_P + (elapsed * RATE_MS);
+  };
+
+  const getAuction = () => readStore(STORAGE.auction, { active: false, sold: false });
+  const setAuction = (val) => writeStore(STORAGE.auction, val);
+
+  function renderBoard() {
+    const rows = readStore(STORAGE.approved, []).sort((a, b) => b.amount - a.amount);
+    if (!rows.length) {
+      boardRows.innerHTML = '<tr><td colspan="4" style="color:#94a3b8;">No approved bidders yet.</td></tr>';
+      return;
+    }
+    boardRows.innerHTML = rows.map((r) => `
+      <tr>
+        <td>${r.name}</td>
+        <td>${fmtMoney(r.amount)}</td>
+        <td><span class="pill">$1,000 verified</span></td>
+        <td>${r.status}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderPending() {
+    const pending = readStore(STORAGE.pending, []);
+    if (!isAdminUnlocked) {
+      pendingList.innerHTML = '';
+      return;
+    }
+    if (!pending.length) {
+      pendingList.innerHTML = '<div class="muted-note">No pending bids.</div>';
+      return;
+    }
+
+    pendingList.innerHTML = pending.map((p) => `
+      <div class="pending-item">
+        <div class="pending-line"><strong>${p.name}</strong> · ${p.email} · ${fmtMoney(p.amount)}</div>
+        <div class="pending-actions">
+          <label><input type="checkbox" id="dep-${p.id}" /> Deposit received ($1,000)</label>
+          <button class="admin-btn" type="button" onclick="approveBid('${p.id}')">Approve to board</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.approveBid = function (bidId) {
+    if (!isAdminUnlocked) return;
+    const pending = readStore(STORAGE.pending, []);
+    const idx = pending.findIndex((x) => x.id === bidId);
+    if (idx === -1) return;
+
+    const dep = document.getElementById(`dep-${bidId}`);
+    if (!dep || !dep.checked) {
+      alert('Confirm the $1,000 deposit before approving.');
+      return;
+    }
+
+    const bid = pending[idx];
+    pending.splice(idx, 1);
+    writeStore(STORAGE.pending, pending);
+
+    const approved = readStore(STORAGE.approved, []);
+    approved.push({
+      id: bid.id,
+      name: bid.name,
+      amount: bid.amount,
+      status: 'Approved',
+      approvedAt: Date.now()
+    });
+    writeStore(STORAGE.approved, approved);
+
+    const auction = getAuction();
+    const triggerPrice = Math.ceil(currentPrice * 100) / 100;
+    if (!auction.active && !auction.sold && bid.amount >= triggerPrice) {
+      setAuction({
+        active: true,
+        sold: false,
+        leaderName: bid.name,
+        leaderAmount: bid.amount,
+        frozenPrice: triggerPrice,
+        startedAt: Date.now(),
+        winnerEndsAt: Date.now() + 4 * 60 * 60 * 1000,
+        lockEndsAt: Date.now() + 12 * 60 * 60 * 1000
+      });
+      const upd = readStore(STORAGE.approved, []).map((r) => r.id === bid.id ? { ...r, status: 'Leading (timer active)' } : r);
+      writeStore(STORAGE.approved, upd);
+    }
+
+    renderPending();
+    renderBoard();
+  };
+
+  unlockAdminBtn.addEventListener('click', () => {
+    if (adminCodeInput.value === ADMIN_CODE) {
+      isAdminUnlocked = true;
+      adminStatus.textContent = 'Unlocked. You can now approve pending bids.';
+      renderPending();
+      return;
+    }
+    adminStatus.textContent = 'Invalid admin code.';
+  });
+
+  async function postToFormSubmit(payload) {
+    return fetch('https://formsubmit.co/ajax/tomgouldmaui@gmail.com', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  bidForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = new FormData(bidForm);
+    const bid = {
+      id: String(Date.now()),
+      name: String(form.get('bid_name') || '').trim(),
+      email: String(form.get('bidder_email') || '').trim(),
+      amount: Number(form.get('bid_amount_usd'))
+    };
+
+    const minNow = Math.ceil(currentPrice * 100) / 100;
+    if (!bid.name || !bid.email || !Number.isFinite(bid.amount) || bid.amount < minNow) {
+      bidMessage.style.display = 'block';
+      bidMessage.textContent = `Bid must be at least ${fmtMoney(minNow)}.`;
+      return;
+    }
+
+    const pending = readStore(STORAGE.pending, []);
+    pending.push({ ...bid, createdAt: Date.now() });
+    writeStore(STORAGE.pending, pending);
+
+    renderPending();
+
+    try {
+      await postToFormSubmit({
+        _subject: 'New Bid: OpenClawCorporate.com',
+        bid_name: bid.name,
+        bidder_email: bid.email,
+        bid_amount_usd: bid.amount,
+        admin_note: 'Pending approval + $1,000 deposit verification required before leaderboard.'
+      });
+    } catch (_) {}
+
+    bidForm.reset();
+    bidMessage.style.display = 'block';
+    bidMessage.textContent = 'Bid submitted. Pending admin approval and $1,000 deposit verification.';
+  });
+
+  notifyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('notifyEmail').value;
+    try {
+      await postToFormSubmit({
+        _subject: 'Price Alert Signup: OpenClawCorporate.com',
+        subscriber_email: email
+      });
+      notifyForm.reset();
+      notifyMessage.style.display = 'block';
+      notifyMessage.textContent = 'You are subscribed for bid updates.';
+    } catch (_) {
+      notifyMessage.style.display = 'block';
+      notifyMessage.textContent = 'Could not submit right now. Please try again.';
+    }
+  });
+
+  function tick() {
+    const auction = getAuction();
+    const price   = auction.active ? auction.frozenPrice : getLivePrice();
     const dollars = Math.floor(price);
     const cents   = Math.floor((price - dollars) * 100);
     const minBid  = Math.ceil(price * 100) / 100;
+    currentPrice = price;
 
     if (cents !== lastCents) {
       el.textContent = '$' + dollars.toLocaleString('en-US') + '.' + String(cents).padStart(2,'0');
@@ -465,9 +860,41 @@
 
     bidInput.min = minBid.toFixed(2);
     bidInput.placeholder = minBid.toFixed(2);
+
+    const now = Date.now();
+    if (auction.active) {
+      const winnerMs = auction.winnerEndsAt - now;
+      const lockMs = auction.lockEndsAt - now;
+      tickerStatus.textContent = `Paused · ${auction.leaderName}`;
+      winnerCountdown.textContent = fmtTimer(winnerMs);
+      lockCountdown.textContent = fmtTimer(lockMs);
+
+      if (winnerMs <= 0 && !auction.sold) {
+        const soldAuction = { ...auction, active: false, sold: true, soldAt: now };
+        setAuction(soldAuction);
+        const upd = readStore(STORAGE.approved, []).map((r) =>
+          r.name === auction.leaderName ? { ...r, status: 'Winner' } : r
+        );
+        writeStore(STORAGE.approved, upd);
+        renderBoard();
+      }
+    } else {
+      if (auction.sold) {
+        tickerStatus.textContent = 'Sold';
+        winnerCountdown.textContent = '00:00:00';
+        lockCountdown.textContent = '00:00:00';
+      } else {
+        tickerStatus.textContent = 'Running';
+        winnerCountdown.textContent = '--:--:--';
+        lockCountdown.textContent = '--:--:--';
+      }
+    }
   }
 
-  setInterval(tick, 80);
+  renderBoard();
+  renderPending();
+
+  setInterval(tick, 150);
   tick();
 
   // Forms are posted directly to FormSubmit (tomgouldmaui@gmail.com)
