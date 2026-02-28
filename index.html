@@ -7,7 +7,7 @@
   <meta name="description" content="Premium domain OpenClawCorporate.com is for sale. Appraised at $27,000. Opening bid $8,500. 35 active watchers." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -119,11 +119,13 @@
       margin-bottom: 1.8rem;
     }
     h1 {
-      font-size: clamp(2.4rem, 8vw, 5.2rem);
-      font-weight: 900; letter-spacing: -0.025em; line-height: 1.04;
-      background: linear-gradient(130deg, #fff 0%, #bfdbfe 45%, #67e8f9 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: clamp(1.6rem, 6.2vw, 3.6rem);
+      font-weight: 500; letter-spacing: -0.015em; line-height: 1.05;
+      color: #ffffff;
       margin-bottom: 1.2rem;
+      max-width: 100%;
+      white-space: nowrap;
     }
     .hero-sub {
       font-size: clamp(0.95rem, 2.2vw, 1.15rem);
@@ -348,7 +350,7 @@
 
       <div class="domain-badge">🔥 Premium Domain For Sale</div>
 
-      <h1>OpenClawCorporate<span style="-webkit-text-fill-color:#60a5fa">.com</span></h1>
+      <h1>OpenClawCorporate.com</h1>
 
       <p class="hero-sub">
         A powerful, memorable corporate domain — appraised at <strong style="color:#fcd34d">$27,000</strong>.
@@ -392,20 +394,22 @@
       </div>
 
       <div class="card">
-        <form id="bidForm" onsubmit="handleBid(event)">
+        <form id="bidForm" action="https://formsubmit.co/tomgouldmaui@gmail.com" method="POST">
+          <input type="hidden" name="_subject" value="New Bid: OpenClawCorporate.com" />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_template" value="table" />
           <div class="field-row">
             <div class="field">
               <label for="bidEmail">Email Address</label>
-              <input type="email" id="bidEmail" placeholder="you@company.com" required />
+              <input type="email" id="bidEmail" name="bidder_email" placeholder="you@company.com" required />
             </div>
             <div class="field">
               <label for="bidAmt">Your Bid (USD)</label>
-              <input type="number" id="bidAmt" placeholder="8500" min="8500" step="100" required />
+              <input type="number" id="bidAmt" name="bid_amount_usd" placeholder="8500" min="8500" step="100" required />
             </div>
           </div>
           <button type="submit" class="btn-bid">🔒 &nbsp;Submit Bid — Secure &amp; Confidential</button>
           <p class="form-note">🛡️ Your information is never shared. We'll reach out within 24 hours to confirm.</p>
-          <div class="success" id="bidOk">✅ Bid received! We'll be in touch within 24 hours.</div>
         </form>
       </div>
 
@@ -417,13 +421,13 @@
           The price rises <strong>$300 every day</strong>. Enter your email and we'll send you daily updates
           so you never miss your window to buy.
         </div>
-        <form class="notify-row" id="notifyForm" onsubmit="handleNotify(event)">
-          <input type="email" id="notifyEmail" placeholder="your@email.com" required />
+        <form class="notify-row" id="notifyForm" action="https://formsubmit.co/tomgouldmaui@gmail.com" method="POST">
+          <input type="hidden" name="_subject" value="Price Alert Signup: OpenClawCorporate.com" />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_template" value="table" />
+          <input type="email" id="notifyEmail" name="subscriber_email" placeholder="your@email.com" required />
           <button type="submit" class="btn-notify">Notify Me</button>
         </form>
-        <div class="success" id="notifyOk" style="margin-top:1rem; max-width:420px; margin-left:auto; margin-right:auto">
-          ✅ You're on the list! Daily price updates are on their way.
-        </div>
       </div>
 
     </div>
@@ -461,21 +465,7 @@
   setInterval(tick, 80);
   tick();
 
-  // === FORMS ===
-  function handleBid(e) {
-    e.preventDefault();
-    const email = document.getElementById('bidEmail').value;
-    const amt   = document.getElementById('bidAmt').value;
-    // Wire to your backend / Formspree here
-    document.getElementById('bidForm').querySelector('button').style.display = 'none';
-    document.getElementById('bidOk').style.display = 'block';
-  }
-
-  function handleNotify(e) {
-    e.preventDefault();
-    document.getElementById('notifyForm').style.display = 'none';
-    document.getElementById('notifyOk').style.display  = 'block';
-  }
+  // Forms are posted directly to FormSubmit (tomgouldmaui@gmail.com)
 </script>
 
 </body>
