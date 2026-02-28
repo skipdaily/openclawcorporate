@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenClawCorporate.com — Premium Domain For Sale</title>
-  <meta name="description" content="Premium domain OpenClawCorporate.com is for sale. Appraised at $27,000. Opening bid $8,500. 35 active watchers." />
+  <meta name="description" content="Premium domain OpenClawCorporate.com is for sale. Appraised at $27,000. Opening bid $4,000. 35 active watchers." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
@@ -434,7 +434,7 @@
       <!-- LIVE PRICE -->
       <div class="price-card">
         <div class="price-lbl">⚡ Current Asking Price — Live</div>
-        <div class="price-num" id="priceDisplay">$8,500.00</div>
+        <div class="price-num" id="priceDisplay">$4,000.00</div>
         <div class="price-rate">
           <span class="arrow-up">↑</span> +$300 / day &nbsp;·&nbsp; Price is rising right now
         </div>
@@ -451,7 +451,7 @@
           <div class="stat-key">Active Watchers</div>
         </div>
         <div class="stat">
-          <div class="stat-val" style="color:#34d399">$8,500</div>
+          <div class="stat-val" style="color:#34d399">$4,000</div>
           <div class="stat-key">Opening Bid</div>
         </div>
       </div>
@@ -478,7 +478,7 @@
             </div>
             <div class="field">
               <label for="bidAmt">Your Bid (USD)</label>
-              <input type="number" id="bidAmt" name="bid_amount_usd" placeholder="8500" min="8500" step="0.01" required />
+              <input type="number" id="bidAmt" name="bid_amount_usd" placeholder="4000" min="4000" step="0.01" required />
             </div>
           </div>
           <button type="submit" class="btn-bid">🔒 &nbsp;Submit Bid — Secure &amp; Confidential</button>
@@ -550,7 +550,7 @@
   // === LIVE PRICE TICKER ===
   // $300/day = 0.003472... per second
   const RATE_MS  = 300 / 86400 / 1000;   // dollars per millisecond
-  const START_P  = 8500;
+  const START_P  = 4000;
   const START_T  = new Date('2026-02-28T00:00:00Z').getTime();
   const el       = document.getElementById('priceDisplay');
   const bidInput = document.getElementById('bidAmt');
@@ -565,7 +565,8 @@
   const STORAGE = {
     approved: 'oc_approved_bids_v1',
     auction: 'oc_auction_state_v1',
-    cleanup: 'oc_cleanup_remove_leader_v1'
+    cleanup: 'oc_cleanup_remove_leader_v1',
+    reset4000: 'oc_reset_opening_4000_v1'
   };
 
   let currentPrice = START_P;
@@ -680,6 +681,23 @@
     writeStore(STORAGE.cleanup, true);
   }
 
+  function resetOpeningTo4000Once() {
+    const alreadyReset = readStore(STORAGE.reset4000, false);
+    if (alreadyReset) return;
+
+    const approved = readStore(STORAGE.approved, []).map((b) => {
+      const status = String(b.status || '').toLowerCase();
+      if (status.includes('leading') || status.includes('winner')) {
+        return { ...b, status: 'Approved' };
+      }
+      return b;
+    });
+    writeStore(STORAGE.approved, approved);
+    setAuction({ active: false, sold: false });
+
+    writeStore(STORAGE.reset4000, true);
+  }
+
   async function postToFormSubmit(payload) {
     return fetch('https://formsubmit.co/ajax/tomgouldmaui@gmail.com', {
       method: 'POST',
@@ -786,6 +804,7 @@
   }
 
   clearLeaderOnce();
+  resetOpeningTo4000Once();
   renderBoard();
 
   setInterval(tick, 150);
