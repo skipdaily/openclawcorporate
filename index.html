@@ -405,7 +405,7 @@
             </div>
             <div class="field">
               <label for="bidAmt">Your Bid (USD)</label>
-              <input type="number" id="bidAmt" name="bid_amount_usd" placeholder="8500" min="8500" step="100" required />
+              <input type="number" id="bidAmt" name="bid_amount_usd" placeholder="8500" min="8500" step="0.01" required />
             </div>
           </div>
           <button type="submit" class="btn-bid">🔒 &nbsp;Submit Bid — Secure &amp; Confidential</button>
@@ -445,6 +445,7 @@
   const START_P  = 8500;
   const START_T  = new Date('2026-02-28T00:00:00Z').getTime();
   const el       = document.getElementById('priceDisplay');
+  const bidInput = document.getElementById('bidAmt');
   let   lastCents = -1;
 
   function tick() {
@@ -452,6 +453,7 @@
     const price   = START_P + (elapsed * RATE_MS);
     const dollars = Math.floor(price);
     const cents   = Math.floor((price - dollars) * 100);
+    const minBid  = Math.ceil(price * 100) / 100;
 
     if (cents !== lastCents) {
       el.textContent = '$' + dollars.toLocaleString('en-US') + '.' + String(cents).padStart(2,'0');
@@ -460,6 +462,9 @@
       el.classList.add('glow');
       lastCents = cents;
     }
+
+    bidInput.min = minBid.toFixed(2);
+    bidInput.placeholder = minBid.toFixed(2);
   }
 
   setInterval(tick, 80);
