@@ -328,7 +328,7 @@
     }
     .auction-state {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 0.7rem;
       margin-bottom: 1rem;
     }
@@ -384,65 +384,6 @@
       color: var(--muted);
       font-size: 0.75rem;
       margin-top: 0.65rem;
-    }
-
-    /* === ADMIN PANEL === */
-    .admin-panel {
-      background: rgba(59,130,246,0.06);
-      border: 1px solid rgba(59,130,246,0.2);
-      border-radius: 16px;
-      padding: 1rem;
-      margin-bottom: 1.2rem;
-    }
-    .admin-head {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: #93c5fd;
-      margin-bottom: 0.65rem;
-    }
-    .admin-row {
-      display: flex;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-      margin-bottom: 0.7rem;
-    }
-    .admin-row input { max-width: 260px; }
-    .admin-btn {
-      border: 1px solid rgba(59,130,246,0.35);
-      background: rgba(59,130,246,0.2);
-      color: #bfdbfe;
-      border-radius: 10px;
-      padding: 0.62rem 0.9rem;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.82rem;
-    }
-    .pending-item {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.6rem;
-      margin-top: 0.55rem;
-      background: rgba(255,255,255,0.02);
-    }
-    .pending-line {
-      font-size: 0.84rem;
-      color: #e2e8f0;
-      margin-bottom: 0.4rem;
-    }
-    .pending-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-    .pending-actions label {
-      text-transform: none;
-      letter-spacing: normal;
-      font-size: 0.8rem;
-      color: var(--muted2);
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
     }
 
     /* === FOOTER === */
@@ -548,7 +489,7 @@
 
       <div class="sec-head">
         <div class="sec-title">Bidders Board</div>
-        <div class="sec-sub">Only admin-approved bidders with a verified $1,000 deposit are shown.</div>
+        <div class="sec-sub">Only seller-approved bidders with a verified $1,000 deposit are shown.</div>
       </div>
 
       <div class="board-wrap">
@@ -560,10 +501,6 @@
           <div class="auction-cell">
             <div class="auction-k">4h Winner Clock</div>
             <div class="auction-v" id="winnerCountdown">--:--:--</div>
-          </div>
-          <div class="auction-cell">
-            <div class="auction-k">12h Lock Window</div>
-            <div class="auction-v" id="lockCountdown">--:--:--</div>
           </div>
         </div>
 
@@ -580,17 +517,7 @@
             <tbody id="boardRows"></tbody>
           </table>
         </div>
-        <p class="muted-note">Rule applied: when an approved bidder matches/exceeds live price, ticker freezes and countdowns begin.</p>
-      </div>
-
-      <div class="admin-panel">
-        <div class="admin-head">Admin Approval</div>
-        <div class="admin-row">
-          <input type="password" id="adminCode" placeholder="Enter admin code" />
-          <button class="admin-btn" type="button" id="unlockAdmin">Unlock</button>
-        </div>
-        <div class="muted-note" id="adminStatus">Locked. Admin can approve pending bids after deposit is confirmed.</div>
-        <div id="pendingList"></div>
+        <p class="muted-note">Rule applied: when an approved bidder matches/exceeds live price, ticker freezes and a 4-hour winner countdown begins.</p>
       </div>
 
       <!-- NOTIFY -->
@@ -634,23 +561,13 @@
   const notifyMessage = document.getElementById('notifyMessage');
   const tickerStatus = document.getElementById('tickerStatus');
   const winnerCountdown = document.getElementById('winnerCountdown');
-  const lockCountdown = document.getElementById('lockCountdown');
-  const pendingList = document.getElementById('pendingList');
-  const adminStatus = document.getElementById('adminStatus');
-  const adminCodeInput = document.getElementById('adminCode');
-  const unlockAdminBtn = document.getElementById('unlockAdmin');
 
   const STORAGE = {
-    pending: 'oc_pending_bids_v1',
     approved: 'oc_approved_bids_v1',
     auction: 'oc_auction_state_v1'
   };
 
-  // Change this to your own strong code after deploy.
-  const ADMIN_CODE = 'CHANGE_THIS_ADMIN_CODE';
-
   let currentPrice = START_P;
-  let isAdminUnlocked = false;
   let   lastCents = -1;
 
   const readStore = (key, fallback) => {
@@ -697,49 +614,17 @@
     `).join('');
   }
 
-  function renderPending() {
-    const pending = readStore(STORAGE.pending, []);
-    if (!isAdminUnlocked) {
-      pendingList.innerHTML = '';
-      return;
-    }
-    if (!pending.length) {
-      pendingList.innerHTML = '<div class="muted-note">No pending bids.</div>';
-      return;
-    }
-
-    pendingList.innerHTML = pending.map((p) => `
-      <div class="pending-item">
-        <div class="pending-line"><strong>${p.name}</strong> · ${p.email} · ${fmtMoney(p.amount)}</div>
-        <div class="pending-actions">
-          <label><input type="checkbox" id="dep-${p.id}" /> Deposit received ($1,000)</label>
-          <button class="admin-btn" type="button" onclick="approveBid('${p.id}')">Approve to board</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  window.approveBid = function (bidId) {
-    if (!isAdminUnlocked) return;
-    const pending = readStore(STORAGE.pending, []);
-    const idx = pending.findIndex((x) => x.id === bidId);
-    if (idx === -1) return;
-
-    const dep = document.getElementById(`dep-${bidId}`);
-    if (!dep || !dep.checked) {
-      alert('Confirm the $1,000 deposit before approving.');
-      return;
-    }
-
-    const bid = pending[idx];
-    pending.splice(idx, 1);
-    writeStore(STORAGE.pending, pending);
+  window.addApprovedBidder = function (name, amount) {
+    const cleanName = String(name || '').trim();
+    const cleanAmount = Number(amount);
+    if (!cleanName || !Number.isFinite(cleanAmount)) return;
 
     const approved = readStore(STORAGE.approved, []);
+    const bidderId = String(Date.now());
     approved.push({
-      id: bid.id,
-      name: bid.name,
-      amount: bid.amount,
+      id: bidderId,
+      name: cleanName,
+      amount: cleanAmount,
       status: 'Approved',
       approvedAt: Date.now()
     });
@@ -747,34 +632,24 @@
 
     const auction = getAuction();
     const triggerPrice = Math.ceil(currentPrice * 100) / 100;
-    if (!auction.active && !auction.sold && bid.amount >= triggerPrice) {
+    if (!auction.active && !auction.sold && cleanAmount >= triggerPrice) {
       setAuction({
         active: true,
         sold: false,
-        leaderName: bid.name,
-        leaderAmount: bid.amount,
+        leaderName: cleanName,
+        leaderAmount: cleanAmount,
         frozenPrice: triggerPrice,
         startedAt: Date.now(),
-        winnerEndsAt: Date.now() + 4 * 60 * 60 * 1000,
-        lockEndsAt: Date.now() + 12 * 60 * 60 * 1000
+        winnerEndsAt: Date.now() + 4 * 60 * 60 * 1000
       });
-      const upd = readStore(STORAGE.approved, []).map((r) => r.id === bid.id ? { ...r, status: 'Leading (timer active)' } : r);
-      writeStore(STORAGE.approved, upd);
+      const updated = readStore(STORAGE.approved, []).map((r) =>
+        r.id === bidderId ? { ...r, status: 'Leading (timer active)' } : r
+      );
+      writeStore(STORAGE.approved, updated);
     }
 
-    renderPending();
     renderBoard();
   };
-
-  unlockAdminBtn.addEventListener('click', () => {
-    if (adminCodeInput.value === ADMIN_CODE) {
-      isAdminUnlocked = true;
-      adminStatus.textContent = 'Unlocked. You can now approve pending bids.';
-      renderPending();
-      return;
-    }
-    adminStatus.textContent = 'Invalid admin code.';
-  });
 
   async function postToFormSubmit(payload) {
     return fetch('https://formsubmit.co/ajax/tomgouldmaui@gmail.com', {
@@ -804,25 +679,19 @@
       return;
     }
 
-    const pending = readStore(STORAGE.pending, []);
-    pending.push({ ...bid, createdAt: Date.now() });
-    writeStore(STORAGE.pending, pending);
-
-    renderPending();
-
     try {
       await postToFormSubmit({
         _subject: 'New Bid: OpenClawCorporate.com',
         bid_name: bid.name,
         bidder_email: bid.email,
         bid_amount_usd: bid.amount,
-        admin_note: 'Pending approval + $1,000 deposit verification required before leaderboard.'
+        admin_note: 'Deposit verification required. Seller will add approved bidders to leaderboard manually.'
       });
     } catch (_) {}
 
     bidForm.reset();
     bidMessage.style.display = 'block';
-    bidMessage.textContent = 'Bid submitted. Pending admin approval and $1,000 deposit verification.';
+    bidMessage.textContent = 'Bid submitted. Once deposit is verified, seller adds bidder to leaderboard manually.';
   });
 
   notifyForm.addEventListener('submit', async (e) => {
@@ -864,10 +733,8 @@
     const now = Date.now();
     if (auction.active) {
       const winnerMs = auction.winnerEndsAt - now;
-      const lockMs = auction.lockEndsAt - now;
       tickerStatus.textContent = `Paused · ${auction.leaderName}`;
       winnerCountdown.textContent = fmtTimer(winnerMs);
-      lockCountdown.textContent = fmtTimer(lockMs);
 
       if (winnerMs <= 0 && !auction.sold) {
         const soldAuction = { ...auction, active: false, sold: true, soldAt: now };
@@ -882,17 +749,14 @@
       if (auction.sold) {
         tickerStatus.textContent = 'Sold';
         winnerCountdown.textContent = '00:00:00';
-        lockCountdown.textContent = '00:00:00';
       } else {
         tickerStatus.textContent = 'Running';
         winnerCountdown.textContent = '--:--:--';
-        lockCountdown.textContent = '--:--:--';
       }
     }
   }
 
   renderBoard();
-  renderPending();
 
   setInterval(tick, 150);
   tick();
