@@ -154,6 +154,63 @@
       50%      { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
     }
 
+    .watcher-board {
+      margin: 0 auto 2.2rem;
+      max-width: 760px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 1rem;
+      text-align: left;
+    }
+    .watcher-title {
+      font-size: 0.8rem;
+      color: var(--muted2);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 0.65rem;
+    }
+    .watcher-manual {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.6rem;
+      margin-bottom: 0.7rem;
+    }
+    .watcher-add-btn {
+      border: 1px solid rgba(59,130,246,0.35);
+      background: rgba(59,130,246,0.2);
+      color: #bfdbfe;
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.84rem;
+      font-family: inherit;
+    }
+    .watcher-list {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      min-height: 34px;
+    }
+    .watcher-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.32rem 0.62rem;
+      border-radius: 999px;
+      border: 1px solid rgba(56,189,248,0.28);
+      background: rgba(56,189,248,0.12);
+      color: #bae6fd;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .watcher-empty {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
     /* === PRICE CARD === */
     .price-card {
       position: relative; overflow: hidden;
@@ -431,6 +488,15 @@
         35 people are currently tracking this domain
       </div>
 
+      <div class="watcher-board">
+        <div class="watcher-title">Watcher Names</div>
+        <form id="watcherManualForm" class="watcher-manual">
+          <input type="text" id="watcherNameInput" placeholder="Add watcher name manually" maxlength="60" required />
+          <button type="submit" class="watcher-add-btn">Add Watcher</button>
+        </form>
+        <div class="watcher-list" id="watcherNames"></div>
+      </div>
+
       <!-- LIVE PRICE -->
       <div class="price-card">
         <div class="price-lbl">⚡ Current Asking Price — Live</div>
@@ -561,12 +627,16 @@
   const notifyMessage = document.getElementById('notifyMessage');
   const tickerStatus = document.getElementById('tickerStatus');
   const winnerCountdown = document.getElementById('winnerCountdown');
+  const watcherNamesEl = document.getElementById('watcherNames');
+  const watcherManualForm = document.getElementById('watcherManualForm');
+  const watcherNameInput = document.getElementById('watcherNameInput');
 
   const STORAGE = {
     approved: 'oc_approved_bids_v1',
     auction: 'oc_auction_state_v1',
     cleanup: 'oc_cleanup_remove_leader_v1',
-    reset4000: 'oc_reset_opening_4000_v1'
+    reset4000: 'oc_reset_opening_4000_v1',
+    watcherNames: 'oc_watcher_names_v1'
   };
 
   let currentPrice = START_P;
@@ -620,6 +690,26 @@
       </tr>
     `).join('');
   }
+
+  function renderWatcherNames() {
+    const names = readStore(STORAGE.watcherNames, []);
+    if (!names.length) {
+      watcherNamesEl.innerHTML = '<span class="watcher-empty">No watcher names added yet.</span>';
+      return;
+    }
+    watcherNamesEl.innerHTML = names.map((n) => `<span class="watcher-chip">👤 ${n}</span>`).join('');
+  }
+
+  window.addWatcherName = function (name) {
+    const clean = String(name || '').trim();
+    if (!clean) return;
+    const names = readStore(STORAGE.watcherNames, []);
+    if (!names.includes(clean)) {
+      names.push(clean);
+      writeStore(STORAGE.watcherNames, names);
+      renderWatcherNames();
+    }
+  };
 
   window.addApprovedBidder = function (name, amount) {
     const cleanName = String(name || '').trim();
@@ -758,6 +848,12 @@
     }
   });
 
+  watcherManualForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    addWatcherName(watcherNameInput.value);
+    watcherNameInput.value = '';
+  });
+
   function tick() {
     const auction = getAuction();
     const price   = auction.active ? auction.frozenPrice : getLivePrice();
@@ -806,6 +902,7 @@
   clearLeaderOnce();
   resetOpeningTo4000Once();
   renderBoard();
+  renderWatcherNames();
 
   setInterval(tick, 150);
   tick();
