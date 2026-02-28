@@ -155,7 +155,7 @@
     }
 
     .watcher-board {
-      margin: 0 auto 2.2rem;
+      margin: 1rem auto 0;
       max-width: 760px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
@@ -170,23 +170,6 @@
       text-transform: uppercase;
       font-weight: 700;
       margin-bottom: 0.65rem;
-    }
-    .watcher-manual {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.6rem;
-      margin-bottom: 0.7rem;
-    }
-    .watcher-add-btn {
-      border: 1px solid rgba(59,130,246,0.35);
-      background: rgba(59,130,246,0.2);
-      color: #bfdbfe;
-      border-radius: 10px;
-      padding: 0.7rem 1rem;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.84rem;
-      font-family: inherit;
     }
     .watcher-list {
       display: flex;
@@ -362,10 +345,13 @@
     .notify-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.3rem; }
     .notify-sub { font-size: 0.84rem; color: var(--muted2); margin-bottom: 1.25rem; line-height: 1.55; }
     .notify-row {
-      display: flex; gap: 0.7rem;
-      max-width: 420px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 0.7rem;
+      max-width: 760px;
+      margin: 0 auto;
     }
-    .notify-row input { flex: 1; }
+    .notify-row input { min-width: 0; }
     .btn-notify {
       padding: 0.78rem 1.3rem; border-radius: 10px; border: none;
       cursor: pointer; font-size: 0.88rem; font-weight: 700;
@@ -456,7 +442,7 @@
       .auction-state { grid-template-columns: 1fr; }
       .stats     { grid-template-columns: 1fr; }
       .field-row { grid-template-columns: 1fr; }
-      .notify-row { flex-direction: column; }
+      .notify-row { grid-template-columns: 1fr; }
       header { padding: 0.8rem 1rem; }
     }
   </style>
@@ -486,15 +472,6 @@
       <div class="watchers-badge">
         <div class="w-dot"></div>
         35 people are currently tracking this domain
-      </div>
-
-      <div class="watcher-board">
-        <div class="watcher-title">Watcher Names</div>
-        <form id="watcherManualForm" class="watcher-manual">
-          <input type="text" id="watcherNameInput" placeholder="Add watcher name manually" maxlength="60" required />
-          <button type="submit" class="watcher-add-btn">Add Watcher</button>
-        </form>
-        <div class="watcher-list" id="watcherNames"></div>
       </div>
 
       <!-- LIVE PRICE -->
@@ -598,10 +575,16 @@
           <input type="hidden" name="_subject" value="Price Alert Signup: OpenClawCorporate.com" />
           <input type="hidden" name="_captcha" value="false" />
           <input type="hidden" name="_template" value="table" />
+          <input type="text" id="notifyWatcherName" name="watcher_name" placeholder="watcher name" maxlength="60" required />
           <input type="email" id="notifyEmail" name="subscriber_email" placeholder="your@email.com" required />
           <button type="submit" class="btn-notify">Notify Me</button>
         </form>
         <div class="success" id="notifyMessage" style="margin-top:1rem;"></div>
+
+        <div class="watcher-board">
+          <div class="watcher-title">Watching</div>
+          <div class="watcher-list" id="watcherNames"></div>
+        </div>
       </div>
 
     </div>
@@ -628,16 +611,53 @@
   const tickerStatus = document.getElementById('tickerStatus');
   const winnerCountdown = document.getElementById('winnerCountdown');
   const watcherNamesEl = document.getElementById('watcherNames');
-  const watcherManualForm = document.getElementById('watcherManualForm');
-  const watcherNameInput = document.getElementById('watcherNameInput');
 
   const STORAGE = {
     approved: 'oc_approved_bids_v1',
     auction: 'oc_auction_state_v1',
     cleanup: 'oc_cleanup_remove_leader_v1',
     reset4000: 'oc_reset_opening_4000_v1',
-    watcherNames: 'oc_watcher_names_v1'
+    watcherNames: 'oc_watcher_names_v1',
+    watcherSeed: 'oc_watcher_seed_35_v2'
   };
+
+  const DEFAULT_WATCHERS = [
+    'The Bid Lebowski',
+    'Ctrl Alt Elite',
+    '404 Price Not Found',
+    'Domain and Boarder',
+    'The Cache Me Ousside Fund',
+    'No Sleep Till .com',
+    'Cloud Nine Holdings',
+    'The Late Bid Show',
+    'Mission Impixel',
+    'Byte Me Ventures',
+    'The Quiet Typers Club',
+    'Mildly Competitive Capital',
+    'Plausible Deniability LLC',
+    'Serious Faces Group',
+    'The Placeholder Partners',
+    'Not Financial Advice Co',
+    'Big Deal Energy',
+    'One More Zero Fund',
+    'Decimal Point Society',
+    'Keyboard Cowboys Inc',
+    'Sneaky Good Domains',
+    'The Price Is Almost Right',
+    'Bandwidth Bandits',
+    'The Upside Downside',
+    'Coffee Fueled Capital',
+    'Domain Rangers',
+    'The Name Game Team',
+    'One Click Wonders',
+    'Spreadsheet Ninjas',
+    'Inbox Zero-ish',
+    'The Good Offer Guild',
+    'Steady Hands Syndicate',
+    'Pixel Pioneers',
+    'Moonshot Maybe',
+    'Quietly Winning LLC'
+  ];
 
   let currentPrice = START_P;
   let   lastCents = -1;
@@ -694,10 +714,17 @@
   function renderWatcherNames() {
     const names = readStore(STORAGE.watcherNames, []);
     if (!names.length) {
-      watcherNamesEl.innerHTML = '<span class="watcher-empty">No watcher names added yet.</span>';
+      watcherNamesEl.innerHTML = '<span class="watcher-empty">No names listed yet.</span>';
       return;
     }
     watcherNamesEl.innerHTML = names.map((n) => `<span class="watcher-chip">👤 ${n}</span>`).join('');
+  }
+
+  function seedWatchersOnce() {
+    const alreadySeeded = readStore(STORAGE.watcherSeed, false);
+    if (alreadySeeded) return;
+    writeStore(STORAGE.watcherNames, DEFAULT_WATCHERS);
+    writeStore(STORAGE.watcherSeed, true);
   }
 
   window.addWatcherName = function (name) {
@@ -834,9 +861,11 @@
   notifyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('notifyEmail').value;
+    const watcherName = document.getElementById('notifyWatcherName').value;
     try {
       await postToFormSubmit({
         _subject: 'Price Alert Signup: OpenClawCorporate.com',
+        watcher_name: watcherName,
         subscriber_email: email
       });
       notifyForm.reset();
@@ -846,12 +875,6 @@
       notifyMessage.style.display = 'block';
       notifyMessage.textContent = 'Could not submit right now. Please try again.';
     }
-  });
-
-  watcherManualForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    addWatcherName(watcherNameInput.value);
-    watcherNameInput.value = '';
   });
 
   function tick() {
@@ -901,6 +924,7 @@
 
   clearLeaderOnce();
   resetOpeningTo4000Once();
+  seedWatchersOnce();
   renderBoard();
   renderWatcherNames();
 
