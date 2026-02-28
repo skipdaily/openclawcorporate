@@ -564,7 +564,8 @@
 
   const STORAGE = {
     approved: 'oc_approved_bids_v1',
-    auction: 'oc_auction_state_v1'
+    auction: 'oc_auction_state_v1',
+    cleanup: 'oc_cleanup_remove_leader_v1'
   };
 
   let currentPrice = START_P;
@@ -599,7 +600,12 @@
   const setAuction = (val) => writeStore(STORAGE.auction, val);
 
   function renderBoard() {
-    const rows = readStore(STORAGE.approved, []).sort((a, b) => b.amount - a.amount);
+    const rows = readStore(STORAGE.approved, []).sort((a, b) => {
+      const aLead = a.status && a.status.toLowerCase().includes('leading') ? 1 : 0;
+      const bLead = b.status && b.status.toLowerCase().includes('leading') ? 1 : 0;
+      if (aLead !== bLead) return bLead - aLead;
+      return b.amount - a.amount;
+    });
     if (!rows.length) {
       boardRows.innerHTML = '<tr><td colspan="4" style="color:#94a3b8;">No approved bidders yet.</td></tr>';
       return;
@@ -650,6 +656,29 @@
 
     renderBoard();
   };
+
+  function clearLeaderOnce() {
+    const alreadyCleared = readStore(STORAGE.cleanup, false);
+    if (alreadyCleared) return;
+
+    const approved = readStore(STORAGE.approved, [])
+      .filter((b) => String(b.name || '').toLowerCase() !== 'backer man')
+      .map((b) => {
+        const status = String(b.status || '').toLowerCase();
+        if (status.includes('leading') || status.includes('winner')) {
+          return { ...b, status: 'Approved' };
+        }
+        return b;
+      });
+    writeStore(STORAGE.approved, approved);
+
+    const auction = getAuction();
+    if (auction.active && !auction.sold) {
+      setAuction({ active: false, sold: false });
+    }
+
+    writeStore(STORAGE.cleanup, true);
+  }
 
   async function postToFormSubmit(payload) {
     return fetch('https://formsubmit.co/ajax/tomgouldmaui@gmail.com', {
@@ -756,6 +785,7 @@
     }
   }
 
+  clearLeaderOnce();
   renderBoard();
 
   setInterval(tick, 150);
